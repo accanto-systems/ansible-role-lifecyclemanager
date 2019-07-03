@@ -1,0 +1,7 @@
+global:
+  security:
+    enabled: false
+    
+configurator:
+  security:
+    enabled: false

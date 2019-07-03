@@ -1,0 +1,85 @@
+####################################################################################
+# lm_charts_strategy == individual
+# Allows the individual charts of LM, Configuration and Foundation to be selected individually rather than using a pre-built combination
+####################################################################################
+
+- name: Check if helm-foundation chart already exists
+  stat:
+    path: "{{ lm_installer_dir }}/{{ lm_foundation_chart|basename }}" 
+  register: foundation_chart_stat
+  when: lm_force_refresh_packages == False
+
+- name: Check if lm-configurator chart already exists
+  stat:
+    path: "{{ lm_installer_dir }}/{{ lm_configurator_chart|basename }}" 
+  register: configurator_chart_stat
+  when: lm_force_refresh_packages == False
+
+- name: Check if lm-helm chart already exists
+  stat:
+    path: "{{ lm_installer_dir }}/{{ lm_chart|basename }}" 
+  register: lm_chart_stat
+  when: lm_force_refresh_packages == False
+
+####################################################################################
+# HTTP/HTTPs
+####################################################################################
+- name: Pull helm-foundation chart
+  get_url:
+    url: "{{ lm_foundation_chart }}" 
+    dest: "{{ lm_installer_dir }}/{{ lm_foundation_chart|basename }}"
+  when: >
+    (lm_force_refresh_packages == True or foundation_chart_stat.stat.exists == False)
+    and (lm_foundation_chart | urlsplit('scheme') == 'http') or (lm_foundation_chart | urlsplit('scheme') == 'https')
+
+- name: Pull lm-configurator chart
+  get_url:
+    url: "{{ lm_configurator_chart }}" 
+    dest: "{{ lm_installer_dir }}/{{ lm_configurator_chart|basename }}"
+  when: >
+    (lm_force_refresh_packages == True or configurator_chart_stat.stat.exists == False)
+    and (lm_configurator_chart | urlsplit('scheme') == 'http') or (lm_configurator_chart | urlsplit('scheme') == 'https')
+
+- name: Pull lm-helm chart
+  get_url:
+    url: "{{ lm_chart }}" 
+    dest: "{{ lm_installer_dir }}/{{ lm_chart|basename }}"
+  when: >
+    (lm_force_refresh_packages == True or lm_chart_stat.stat.exists == False)
+    and (lm_chart | urlsplit('scheme') == 'http') or (lm_chart | urlsplit('scheme') == 'https')
+
+####################################################################################
+# FILE
+####################################################################################
+- name: Copy helm-foundation chart from local file
+  copy: 
+    remote_src: no
+    src: "{{ lm_foundation_chart }}" 
+    dest: "{{ lm_installer_dir }}/{{ lm_foundation_chart|basename }}"
+  when: >
+    (lm_force_refresh_packages == True or foundation_chart_stat.stat.exists == False)
+    and (lm_foundation_chart | urlsplit('scheme') != 'http') and (lm_foundation_chart | urlsplit('scheme') != 'https')
+
+- name: Copy lm-configurator chart from local file
+  copy: 
+    remote_src: no
+    src: "{{ lm_configurator_chart }}" 
+    dest: "{{ lm_installer_dir }}/{{ lm_configurator_chart|basename }}"
+  when: >
+    (lm_force_refresh_packages == True or configurator_chart_stat.stat.exists == False)
+    and (lm_configurator_chart | urlsplit('scheme') != 'http') and (lm_configurator_chart | urlsplit('scheme') != 'https')
+
+- name: Copy lm-helm chart from local file
+  copy: 
+    remote_src: no
+    src: "{{ lm_chart }}" 
+    dest: "{{ lm_installer_dir }}/{{ lm_chart|basename }}"
+  when: >
+    (lm_force_refresh_packages == True or lm_chart_stat.stat.exists == False)
+    and (lm_chart | urlsplit('scheme') != 'http') and (lm_chart | urlsplit('scheme') != 'https')
+    
+- name: Set paths to charts
+  set_fact:
+    helm_inst_foundation_chart:  "'{{ lm_installer_dir }}/{{ lm_foundation_chart|basename }}'"
+    helm_inst_configurator_chart: "'{{ lm_installer_dir }}/{{ lm_configurator_chart|basename }}'"
+    helm_inst_lm_chart: "'{{ lm_installer_dir }}/{{ lm_chart|basename }}'"

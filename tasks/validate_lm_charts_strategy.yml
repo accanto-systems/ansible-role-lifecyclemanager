@@ -1,0 +1,72 @@
+- name: "Validate variable: lm_charts_strategy"
+  assert:
+    that:
+      - "lm_charts_strategy == 'from_package' or lm_charts_strategy == 'individual' or lm_charts_strategy == 'from_chart_repo'"
+    fail_msg: "lm_charts_strategy must be either: 'from_package' or 'from_registry' or 'from_chart_repo'"
+     
+
+####################################################################################
+# Strategy: from_package
+####################################################################################
+- name: "Validate variable: lm_charts_package"
+  assert:
+    that: 
+      - "lm_charts_package is defined"
+    fail_msg: "lm_charts_package must be defined when lm_charts_strategy == 'from_package'"
+  when: lm_charts_strategy == "from_package"
+
+####################################################################################
+# Strategy: individual
+####################################################################################
+- name: "Validate variable: lm_chart"
+  assert:
+    that: 
+      - "lm_chart is defined"
+    fail_msg: "lm_chart must be defined when lm_charts_strategy == 'individual'"
+  when: lm_charts_strategy == "individual"
+
+- name: "Validate variable: lm_foundation_chart"
+  assert:
+    that: 
+      - "lm_foundation_chart is defined"
+    fail_msg: "lm_foundation_chart must be defined when lm_charts_strategy == 'individual'"
+  when: lm_charts_strategy == "individual"
+
+- name: "Validate variable: lm_configurator_chart"
+  assert:
+    that: 
+      - "lm_configurator_chart is defined"
+    fail_msg: "lm_configurator_chart must be defined when lm_charts_strategy == 'individual'"
+  when: lm_charts_strategy == "individual"
+
+####################################################################################
+# Strategy: from_chart_repo
+####################################################################################
+- name: "Validate variable: lm_charts_repo_name"
+  assert:
+    that: 
+      - "lm_charts_repo_name is defined"
+    fail_msg: "lm_charts_repo_name must be defined when lm_charts_strategy == 'from_chart_repo'"
+  when: lm_charts_strategy == "from_chart_repo"
+
+- name: "Validate variable: lm_chart_version"
+  assert:
+    that: 
+      - "lm_chart_version is defined"
+      - "lm_version == lm_chart_version"
+    fail_msg: "lm_chart_version must be defined when lm_charts_strategy == 'from_chart_repo' AND it must match lm_version"
+  when: lm_charts_strategy == "from_chart_repo"
+
+- name: "Validate variable: lm_foundation_chart_version"
+  assert:
+    that: 
+      - "lm_foundation_chart_version is defined"
+    fail_msg: "lm_foundation_chart_version must be defined when lm_charts_strategy == 'from_chart_repo'"
+  when: lm_charts_strategy == "from_chart_repo"
+
+- name: "Validate variable: lm_configurator_chart_version"
+  assert:
+    that: 
+      - "lm_configurator_chart_version is defined"
+    fail_msg: "lm_configurator_chart_version must be defined when lm_charts_strategy == 'from_chart_repo'"
+  when: lm_charts_strategy == "from_chart_repo"

@@ -1,0 +1,72 @@
+####################################################################################
+# lm_charts_strategy == from_package
+####################################################################################
+
+- name: Check if LM Helm charts package already exists
+  stat:
+    path: "{{ lm_installer_dir }}/{{ lm_charts_package|basename }}" 
+  register: chart_package_stat
+  when: lm_force_refresh_packages == False
+
+####################################################################################
+# When lm_charts_package_dir is a HTTP/HTTPs address
+####################################################################################
+- name: Pull LM Helm charts package
+  get_url:
+    url: "{{ lm_charts_package }}"
+    dest: "{{ lm_installer_dir }}/{{ lm_charts_package|basename }}" 
+  when: >
+    (lm_force_refresh_packages == True or chart_package_stat.stat.exists == False)
+    and (lm_charts_package | urlsplit('scheme') == 'http') or (lm_charts_package | urlsplit('scheme') == 'https')
+
+####################################################################################
+# When lm_charts_package_dir is a file address
+####################################################################################
+- name: Copy LM Helm charts package from local file
+  copy: 
+    remote_src: no
+    src: "{{ lm_charts_package }}" 
+    dest: "{{ lm_installer_dir }}/{{ lm_charts_package|basename }}" 
+  when: >
+    (lm_force_refresh_packages == True or chart_package_stat.stat.exists == False)
+    and (lm_charts_package | urlsplit('scheme') != 'http') and (lm_charts_package | urlsplit('scheme') != 'https')
+
+####################################################################################
+# For both HTTP and File
+####################################################################################
+- name: Extract LM Helm charts packaging
+  unarchive: 
+    remote_src: yes
+    src: "{{ lm_installer_dir }}/{{ lm_charts_package|basename }}"  
+    dest: "{{ lm_installer_dir }}" 
+    list_files: yes
+  register: lm_charts_package_content
+
+- name: Find Foundation chart in packaging
+  find:
+    paths: "{{ lm_installer_dir }}/{{ lm_charts_package_content.files[0].split('/')[0] }}"
+    patterns: helm-foundation-*.tgz
+  register: foundation_chart_search
+  failed_when: foundation_chart_search.matched == 0
+
+- name: Find LM Configurator chart in packaging
+  find: 
+    paths: "{{ lm_installer_dir }}/{{ lm_charts_package_content.files[0].split('/')[0] }}"
+    patterns: lm-configurator-*.tgz
+  register: configurator_chart_search
+  failed_when: configurator_chart_search.matched == 0
+
+- name: Find LM chart in packaging
+  find: 
+    paths: "{{ lm_installer_dir }}/{{ lm_charts_package_content.files[0].split('/')[0] }}"
+    patterns: lm-helm-*.tgz
+  register: lm_chart_search
+  failed_when: lm_chart_search.matched == 0
+
+- name: Set paths to charts
+  set_fact:
+    helm_inst_foundation_chart: "'{{ foundation_chart_search.files[0].path }}'"
+    helm_inst_configurator_chart: "'{{ configurator_chart_search.files[0].path }}'"
+    helm_inst_lm_chart: "'{{ lm_chart_search.files[0].path }}'"
+    lm_scripts_path: "{{ lm_installer_dir }}/{{ lm_charts_package_content.files[0].split('/')[0] }}/scripts"
+    lm_flavours_path: "{{ lm_installer_dir }}/{{ lm_charts_package_content.files[0].split('/')[0] }}/flavours"

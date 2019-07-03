@@ -1,0 +1,53 @@
+- name: Register LM installation directory
+  set_fact:
+    lm_installer_dir: "/home/{{ ansible_user_id }}/lm-installer"
+
+- name: Print LM installation directory
+  debug:
+    msg: "LM installation directory set to: {{lm_installer_dir}}"
+
+- name: Ensure directory for installation exists
+  file:
+    path: "{{ lm_installer_dir }}"
+    state: directory
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+
+- import_tasks: validate_lm_charts_strategy.yml
+- import_tasks: validate_lm_docker_strategy.yml
+
+- import_tasks: prepare_charts_from_package.yml
+  when: lm_charts_strategy == 'from_package'
+- import_tasks: prepare_charts_from_helm_repo.yml
+  when: lm_charts_strategy == 'from_chart_repo'
+- import_tasks: prepare_charts_from_individual.yml
+  when: lm_charts_strategy == 'individual'
+- import_tasks: prepare_builtin_flavours.yml
+  when: lm_charts_strategy != 'from_package'
+
+- name: Check if force re-install is enabled
+  set_fact:
+    install_allowed: True
+  when: lm_force_reinstall|default(False)|bool == True
+
+- import_tasks: check_current_install.yml
+  when: lm_force_reinstall|default(False)|bool == False
+
+- when: install_allowed == True
+  block:
+    - import_tasks: prepare_docker_images_from_package.yml
+      when: lm_docker_strategy == 'from_package'
+    
+    - import_tasks: prepare_docker_images_from_registry.yml
+      when: lm_docker_strategy == 'from_registry'
+
+    - import_tasks: uninstall_lm.yml
+
+    - import_tasks: prepare_volumes_directories.yml
+    - import_tasks: install_lm.yml
+
+- name: Set API access address
+  set_fact:
+    lm_api_addr_external: "{% if lm_secure|default(False)|bool == True %}https{% else %}http{% endif %}://app.lm:{% if lm_secure|default(False)|bool == True %}32443{% else %}32080{% endif %}"
+    lm_api_addr_internal: "{% if lm_secure|default(False)|bool == True %}https{% else %}http{% endif %}://ishtar:8280"
+

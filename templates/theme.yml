@@ -1,0 +1,11 @@
+### lm-configurator ###
+configurator:
+  lmConfigImport:
+    nimrod:
+      alm.nimrod.theme.name: {{lm_theme_name}}
+### End lm-configurator ###
+
+nimrod:
+  app:
+    config:
+      themesConfigMap: lm-themes

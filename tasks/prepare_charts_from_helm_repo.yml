@@ -1,0 +1,9 @@
+####################################################################################
+# lm_charts_strategy == from_chart_repo
+####################################################################################
+
+- name: Set paths to charts
+  set_fact:
+    helm_inst_foundation_chart: "{{lm_charts_repo_name}}/{{lm_foundation_chart_name}} --version {{lm_foundation_chart_version}}"
+    helm_inst_configurator_chart: "{{lm_charts_repo_name}}/{{lm_configurator_chart_name}} --version {{lm_configurator_chart_version}}"
+    helm_inst_lm_chart: "{{lm_charts_repo_name}}/{{lm_chart_name}} --version {{lm_chart_version}}"

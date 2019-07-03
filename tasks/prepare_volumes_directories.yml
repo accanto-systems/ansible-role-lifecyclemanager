@@ -1,0 +1,13 @@
+
+- name: Create directory for Persistent Volumes
+  file:
+    path: /var/lm/
+    state: directory
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+  become: yes
+  when: lm_init_volumes|bool == True and lm_charts_strategy == 'from_package'
+
+- name: Run Volumes Init script
+  shell: /bin/bash {{ lm_scripts_path }}/volumes-init-create-directories.sh
+  when: lm_init_volumes|bool == True and lm_charts_strategy == 'from_package'

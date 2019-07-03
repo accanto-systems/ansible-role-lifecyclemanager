@@ -1,0 +1,5 @@
+global:
+  docker:
+    registryEnabled: true
+    registryIp: "{{ lm_docker_registry_host }}"
+    registryPort: "{{ lm_docker_registry_port }}"

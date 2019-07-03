@@ -1,0 +1,33 @@
+- name: Determine if LM already installed
+  shell: helm ls | grep lm-helm 
+  failed_when: false
+  changed_when: false
+  register: lm_installed
+
+- when: lm_installed is not failed and lm_installed.rc == 0
+  block:
+    - name: Check LM version to be installed
+      shell: helm inspect chart {{ helm_inst_lm_chart }} | grep version | awk {'print $2'}
+      register:  lm_new_version
+
+    - debug:
+        msg: "LM version to be installed is {{lm_new_version.stdout}}"
+
+    - name: Compare with current LM version
+      shell: helm ls | grep lm-helm | grep -w lm-helm-{{ lm_new_version.stdout }}
+      register: lm_version_compare
+      failed_when: false
+      changed_when: false
+
+    - name: Set install 
+      set_fact:
+        install_allowed: "{{ True if lm_version_compare.rc != 0 else False }}"
+
+    - name: Announce Install 
+      debug:
+        msg: "{{ 'Re-installing LM as current version is different to '+lm_new_version.stdout if install_allowed else 'LM version '+lm_new_version.stdout+' already installed' }}"
+
+- name: Install when no existing version
+  set_fact:
+    install_allowed: True
+  when: lm_installed is failed or lm_installed.rc != 0

@@ -1,0 +1,55 @@
+####################################################################################
+# lm_docker_strategy == from_package
+####################################################################################
+
+- name: Check if LM Docker source package already exists
+  stat:
+    path: "{{ lm_installer_dir }}/{{ lm_docker_package|basename }}" 
+  register: docker_package_stat
+  when: lm_force_refresh_packages == False
+
+####################################################################################
+# When lm_docker_package is a HTTP/HTTPs address
+####################################################################################
+- name: Pull LM Docker source packaging
+  get_url:
+    url: "{{ lm_docker_package }}"
+    dest: "{{ lm_installer_dir }}/{{ lm_docker_package|basename }}" 
+  when: >
+    (lm_force_refresh_packages == True or docker_package_stat.stat.exists == False)
+    and (lm_docker_package | urlsplit('scheme') == 'http') or (lm_docker_package | urlsplit('scheme') == 'https')
+
+####################################################################################
+# When lm_docker_package is a file address
+####################################################################################
+- name: Copy LM Docker source package from local file
+  copy: 
+    remote_src: no
+    src: "{{ lm_docker_package }}" 
+    dest: "{{ lm_installer_dir }}/{{ lm_docker_package|basename }}" 
+  when: >
+    (lm_force_refresh_packages == True or docker_package_stat.stat.exists == False)
+    and (lm_docker_package | urlsplit('scheme') != 'http') and (lm_docker_package | urlsplit('scheme') != 'https')
+
+####################################################################################
+# For both HTTP and File
+####################################################################################
+- name: Extract LM Docker source packaging
+  unarchive:
+    remote_src: yes
+    src: "{{ lm_installer_dir }}/{{ lm_docker_package|basename }}"  
+    dest: "{{ lm_installer_dir }}" 
+    list_files: yes
+  register: docker_package_content
+
+- name: Check if LM Docker source package contains correct file
+  stat:
+    path: "{{ lm_installer_dir }}/{{ docker_package_content.files[0].split('/')[0] }}/docker-compose.yml"
+  register: unarchived_docker_package_stat
+- name: Report LM Docker source package issues
+  fail:
+    msg: "Expected file not found: {{ lm_installer_dir }}/{{ docker_package_content.files[0].split('/')[0] }}/docker-compose.yml"
+  when: unarchived_docker_package_stat.stat.exists == False
+
+- name: Build LM Docker Images (this may take some time)
+  command: docker-compose -f {{ lm_installer_dir }}/{{ docker_package_content.files[0].split('/')[0] }}/docker-compose.yml build

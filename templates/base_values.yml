@@ -1,0 +1,53 @@
+openldap:
+{% if lm_secure|default(False)|bool == True and lm_external_openldap|default(False)|bool == False %}
+  enabled: true
+{% else %}
+  enabled: false
+{% endif %}
+
+kibana:
+{% if lm_kibana_enabled|default(False)|bool == True %}
+  enabled: true
+{% else %}
+  enabled: false
+{% endif %}
+  image:
+    tag: "6.1.1"
+  ingress:
+    enabled: true
+    hosts:
+      - "kibana.lm"
+kafdrop:
+{% if lm_kafdrop_enabled|default(False)|bool == True %}
+  enabled: true
+{% else %}
+  enabled: false
+{% endif %}
+
+{% if lm_secure|default(False)|bool == True %}
+global: 
+  ldap:
+{% if lm_external_openldap|default(False)|bool == True %}
+    managerPassword: "{{ lm_external_openldap_manager_password|default('') }}"
+{% else %}
+    managerPassword: "{{ lm_ldap_manager_password|default('') }}"
+{% endif %}
+
+configurator:
+{% if lm_external_openldap|default(False)|bool == True %}
+  lmConfigImport:
+    ishtar:
+      alm.ishtar.security.ldap.url: {{ lm_external_openldap_url }}
+{% endif %}
+  security:
+    lm:
+      clientCredentials:
+        - clientId: LmClient
+          clientSecret: "{{ lm_admin_secret }}"
+          grantTypes: client_credentials
+          roles: SLMAdmin
+{% if lm_external_openldap|default(False)|bool == True %}
+    ldap:
+      enabled: false
+{% endif %}
+{% endif %}

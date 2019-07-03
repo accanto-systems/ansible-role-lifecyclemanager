@@ -1,0 +1,33 @@
+- name: "Validate variable: lm_docker_strategy"
+  assert:
+    that:
+      - "lm_docker_strategy == 'from_package' or lm_docker_strategy == 'from_registry'"
+    fail_msg: "lm_docker_strategy must be either: 'from_package' or 'from_registry'"
+
+####################################################################################
+# Strategy: from_package
+####################################################################################
+- name: "Validate variable: lm_docker_package"
+  assert:
+    that: 
+      - "lm_docker_package is defined"
+    fail_msg: "lm_docker_package must be defined when lm_docker_strategy == 'from_package'"
+  when: lm_docker_strategy == "from_package"
+
+####################################################################################
+# Strategy: from_registry
+####################################################################################
+
+- name: "Validate variable: lm_docker_registry_host"
+  assert:
+    that: 
+      - "lm_docker_registry_host is defined"
+    fail_msg: "lm_docker_registry_host must be defined when lm_docker_strategy == 'from_registry'"
+  when: lm_docker_strategy == "from_registry"
+
+- name: "Validate variable: lm_docker_registry_port"
+  assert:
+    that: 
+      - "lm_docker_registry_port is defined"
+    fail_msg: "lm_docker_registry_port must be defined when lm_docker_strategy == 'from_registry'"
+  when: lm_docker_strategy == "from_registry"

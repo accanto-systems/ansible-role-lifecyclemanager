@@ -1,0 +1,87 @@
+###########################################################
+# Helm Chart installation packages
+###########################################################
+## Pull a lm-helm-charts package from HTTP or FILE location
+## This is the recommended installation type for LM
+lm_charts_strategy: from_package
+# Path to lm-helm-charts package (can be a file path or http address)
+lm_charts_package: 
+
+## Install each part of LM with individual helm charts
+## You will not get the benefit of the Flavours and LM Scripts (used to set up local persistent volumes correctly)
+#lm_charts_strategy: individual
+## Full path to each helm chart
+## If a http or https address then this role will attempt a GET to retrieve it
+## If a file address then this role will attempt to copy it to the target machine from the local machine
+#lm_chart: http://myrepo/helm-charts/chartname.tgz OR /mydir/chartname.tgz
+#lm_foundation_chart: http://myrepo/helm-charts/chartname.tgz OR /mydir/chartname.tgz
+#lm_configurator_chart: http://myrepo/helm-charts/chartname.tgz OR /mydir/chartname.tgz
+
+## Install each part of LM with individual helm charts from a chart repository previously configured in Helm on the target machine (e.g. from helm repo list)
+## You will not get the benefit of the Flavours and LM Scripts (used to set up local persistent volumes correctly) 
+#lm_charts_strategy: from_chart_repo
+#lm_charts_repo_name: myrepo
+lm_chart_name: lm-helm
+#lm_chart_version: 2.0.0-xyz
+lm_foundation_chart_name: helm-foundation
+#lm_foundation_chart_version: 2.0.0-xyz
+lm_configurator_chart_name: lm-configurator
+#lm_configurator_chart_version: 2.0.0-xyz
+
+###########################################################
+# Docker Images
+###########################################################
+## Pull a lm-docker-source package from HTTP or FILE location
+lm_docker_strategy: from_package
+# Path to lm-docker-source package (can be file based or http)
+lm_docker_package:
+
+## Pull the Docker Images from a docker registry
+#lm_docker_strategy: from_registry
+## URL of the docker registry used to pull images
+#lm_docker_registry_host: registry_host
+#lm_docker_registry_port: 5001
+
+###########################################################
+# General LM Install Settings
+###########################################################
+
+## Force packages to be downloaded/copied even if they already exist on the target host
+lm_force_refresh_packages: False
+## Force re-install, even if the given version of LM is already installed
+lm_force_reinstall: False
+
+lm_secure: True
+# Admin Client Credentials (LmClient)
+lm_admin_secret: admin
+
+# Set LM Openldap passwords
+lm_ldap_manager_password: admin
+
+# Alternatively Configure LM to use an external Openldap
+lm_external_openldap: False
+lm_external_openldap_url: 
+lm_external_openldap_manager_password: admin
+
+## List of flavours to enable 
+## The lm-helm-charts package comes with a "flavours" directory which includes Helm values files to configure the installation in a particular way
+## If using "lm_charts_strategy: from_package" then the available flavours depend on the contents of the flavours directory in that package
+#lm_flavours: 
+  #- flavour_name
+
+## Additional values file to be added to the helm install command of each chart
+## The file will be copied from the local machine to the target machine then included on the helm install command with the option: -f <filename>.yaml
+#lm_values: my-custom-values.yaml
+
+## When using local volumes we need to create the directories upfront using the script provided in the lm-helm-charts package
+## Only enabled when "lm_charts_strategy: from_package"
+lm_init_volumes: True
+
+## Customise the theme of LM
+#lm_theme: False
+#lm_theme_name: name_of_theme
+#lm_theme_directory: directory which includes theme.tar file
+
+# Enable/disable optional elements of LM
+lm_kibana_enabled: True
+lm_kafdrop_enabled: False

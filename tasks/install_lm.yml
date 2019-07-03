@@ -1,0 +1,135 @@
+- name: Set vm max map count
+  sysctl:
+    name: vm.max_map_count
+    value: 262144
+    state: present
+    reload: yes
+
+- name: Copy base helm values file
+  template:
+    src: "base_values.yml"
+    dest: "{{ lm_installer_dir }}/lm_base_values.yaml"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+
+- name: Include base helm values file
+  set_fact:
+    base_values: "-f {{ lm_installer_dir }}/lm_base_values.yaml"
+
+- name: Copy custom helm values file
+  template:
+    src: "{{ lm_values }}"
+    dest: "{{ lm_installer_dir }}/lm_custom_values.yaml"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+  when: not (lm_values is undefined or lm_values is none or (lm_values|trim == ''))
+
+- name: Include custom helm values file
+  set_fact:
+    extra_values: "-f {{ lm_installer_dir }}/lm_custom_values.yaml"
+  when: not (lm_values is undefined or lm_values is none or (lm_values|trim == ''))
+
+- name: Determine LM Security
+  set_fact:
+    lm_flavours: "{% if lm_secure|default(False)|bool == False %}{{ (lm_flavours|default([])) + ['no-security'] }}{% else %}{{ (lm_flavours|default([])) }}{% endif %}"
+
+- name: Calculate included flavour values
+  set_fact:
+    flavour_values: "{% if lm_flavours is defined %}{% for flavour in lm_flavours %} -f {{ lm_flavours_path }}/{{ flavour }}/{{ flavour }}-values.yaml{% endfor %}{% endif %}"
+
+- debug:
+    msg: "{{lm_flavours}}"
+
+- name: Install Foundation
+  command: helm install {{ helm_inst_foundation_chart }} --name foundation {{ flavour_values | trim }} {{base_values}} {% if extra_values is defined %}{{extra_values}}{% endif %}
+
+- name: Wait for Kafka
+  shell: kubectl get pods | grep kafka
+  register: kafka_status
+  until: kafka_status.stdout.find("1/1") != -1
+  retries: 150
+  delay: 20
+
+- name: Wait for Cassandra
+  shell: kubectl get pods | grep cassandra
+  register: cass_status
+  until: cass_status.stdout.find("1/1") != -1
+  retries: 50
+  delay: 20
+
+- name: Determine Elasticsearch pod to wait for
+  shell: kubectl get pods | grep elasticsearch-client
+  register: elastic_client_exists
+  failed_when: false
+
+- name: Wait for Elasticsearch client
+  shell: kubectl get pods | grep elasticsearch-client
+  register: elastic_status
+  until: elastic_status.stdout.find("1/1") != -1
+  retries: 100
+  delay: 20
+  when: elastic_client_exists.rc == 0
+
+- name: Wait for Elasticsearch data
+  shell: kubectl get pods | grep elasticsearch-data
+  register: elastic_status
+  until: elastic_status.stdout.find("1/1") != -1
+  retries: 100
+  delay: 20
+  when: elastic_client_exists.rc != 0
+
+- name: Wait for Elasticsearch to settle
+  pause:
+    minutes: 1
+
+- name: Copy theme to host
+  copy:
+    src: "{{ lm_theme_directory }}/theme.tar"
+    dest: "/tmp/theme.tar"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+  when: lm_theme|default(False)|bool == True
+
+- name: Copy theme values
+  template:
+    src: "theme.yml"
+    dest: "{{ lm_installer_dir }}/theme.yml"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+  when: lm_theme|default(False)|bool == True
+
+- name: Clear theme configmap
+  shell: kubectl delete configmap lm-themes
+  ignore_errors: yes
+  when: lm_theme|default(False)|bool == True
+
+- name: Create theme configmap
+  shell: kubectl create configmap lm-themes --from-file /tmp/theme.tar
+  when: lm_theme|default(False)|bool == True
+
+- name: Install LM Configurator
+  command: helm install {{ helm_inst_configurator_chart }} --name lm-configurator {{ flavour_values | trim }} {{base_values}} {% if docker_registry_values_path is defined %}-f {{ docker_registry_values_path }}{% endif %}{% if lm_theme|default(False)|bool == True %} -f {{ lm_installer_dir }}/theme.yml{% endif %} {% if extra_values is defined %}{{extra_values}}{% endif %}
+
+- name: Wait for LM Configurator to complete
+  shell: kubectl get pods | grep lm-configurator | awk '{print $3}'
+  register: lm_configurator_status_cmd
+  until: lm_configurator_status_cmd.stdout.find("Completed") != -1
+  retries: 200
+  delay: 10
+
+- name: Install LM
+  command: helm install {{ helm_inst_lm_chart }} --name lm {{ flavour_values | trim }} {{base_values}} {% if docker_registry_values_path is defined %}-f {{ docker_registry_values_path }}{% endif %}{% if lm_theme|default(False)|bool == True %} -f {{ lm_installer_dir }}/theme.yml{% endif %} {% if extra_values is defined %}{{extra_values}}{% endif %}
+
+- name: Wait for LM Gateway to be ready
+  shell: kubectl get pods | grep ishtar
+  register: ishtar_status
+  until: ishtar_status.stdout.find("1/1") != -1
+  retries: 120
+  delay: 20
+
+- name: Wait for LM UI to be ready
+  shell: kubectl get pods | grep nimrod
+  register: nimrod_status
+  until: nimrod_status.stdout.find("1/1") != -1
+  retries: 120
+  delay: 20

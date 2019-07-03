@@ -1,0 +1,41 @@
+- name: Check lm release in helm
+  shell: helm get lm
+  register: helm_get_lm
+  failed_when: false
+  changed_when: false
+
+- name: Uninstall lm release
+  shell: helm delete lm --purge
+  when: helm_get_lm is not failed and helm_get_lm.rc == 0
+
+- name: Check lm-configurator release in helm
+  shell: helm get lm-configurator
+  register: helm_get_lm_configurator
+  failed_when: false
+  changed_when: false
+
+- name: Uninstall lm-configurator release
+  shell: helm delete lm-configurator --purge
+  when: helm_get_lm_configurator is not failed and helm_get_lm_configurator.rc == 0
+
+- name: Check foundation release in helm
+  shell: helm get foundation
+  register: helm_get_foundation
+  failed_when: false
+  changed_when: false
+
+- name: Uninstall foundation release (this may take some time)
+  shell: helm delete foundation --purge
+  when: helm_get_foundation is not failed and helm_get_foundation.rc == 0
+
+- name: Remove Persistent Volume Claims
+  shell: kubectl delete pvc -l release=foundation
+   
+- name: Remove Persistent Volumes 
+  shell: kubectl delete pv -l createdBy=volumes-init
+  
+- name: Remove volume directories
+  file:
+    path: /var/lm/
+    state: absent
+  become: yes

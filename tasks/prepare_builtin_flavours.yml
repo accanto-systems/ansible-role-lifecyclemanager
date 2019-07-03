@@ -1,0 +1,17 @@
+- name: Ensure Flavours directory structure exists
+  file:
+    path: '{{ lm_installer_dir }}/flavours/{{ item.path }}'
+    state: directory
+  with_filetree: '../templates/flavours/'
+  when: item.state == 'directory'
+
+- name: Copy over built-in flavours
+  template:
+    src: '{{ item.src }}'
+    dest: '{{ lm_installer_dir }}/flavours/{{ item.path }}'
+  with_filetree: '../templates/flavours/'
+  when: item.state == 'file'
+
+- name: Set path to flavours
+  set_fact:
+    lm_flavours_path: "{{ lm_installer_dir }}/flavours/"
