@@ -1,5 +1,27 @@
+{% if lm_init_volumes|default(True)|bool == True %}
+volumesInit:
+  enabled: true
+{% else %}
+volumesInit:
+  enabled: false
+{% endif %}
+
 openldap:
 {% if lm_secure|default(False)|bool == True and lm_external_openldap|default(False)|bool == False %}
+  enabled: true
+{% else %}
+  enabled: false
+{% endif %}
+
+nginx-ingress:
+{% if lm_nginx_ingress_enabled|default(False)|bool == True %}
+  enabled: true
+{% else %}
+  enabled: false
+{% endif %}
+
+filebeat:
+{% if lm_filebeat_enabled|default(False)|bool == True %}
   enabled: true
 {% else %}
   enabled: false
