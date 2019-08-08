@@ -43,6 +43,7 @@
 - name: Install Foundation
   command: helm install {{ helm_inst_foundation_chart }} --name foundation {{ flavour_values | trim }} {{base_values}} {% if extra_values is defined %}{{extra_values}}{% endif %}
 
+# TODO this needs to be able to work with more than 1 replica
 - name: Wait for Kafka
   shell: kubectl get pods | grep kafka
   register: kafka_status
@@ -50,6 +51,7 @@
   retries: 150
   delay: 20
 
+# TODO this needs to be able to work with more than 1 replica
 - name: Wait for Cassandra
   shell: kubectl get pods | grep cassandra
   register: cass_status
@@ -62,6 +64,7 @@
   register: elastic_client_exists
   failed_when: false
 
+# TODO this needs to be able to work with more than 1 replica
 - name: Wait for Elasticsearch client
   shell: kubectl get pods | grep elasticsearch-client
   register: elastic_status
@@ -70,6 +73,7 @@
   delay: 20
   when: elastic_client_exists.rc == 0
 
+# TODO this needs to be able to work with more than 1 replica
 - name: Wait for Elasticsearch data
   shell: kubectl get pods | grep elasticsearch-data
   register: elastic_status
@@ -120,6 +124,7 @@
 - name: Install LM
   command: helm install {{ helm_inst_lm_chart }} --name lm {{ flavour_values | trim }} {{base_values}} {% if docker_registry_values_path is defined %}-f {{ docker_registry_values_path }}{% endif %}{% if lm_theme|default(False)|bool == True %} -f {{ lm_installer_dir }}/theme.yml{% endif %} {% if extra_values is defined %}{{extra_values}}{% endif %}
 
+# TODO this needs to be able to work with more than 1 replica
 - name: Wait for LM Gateway to be ready
   shell: kubectl get pods | grep ishtar
   register: ishtar_status
@@ -127,6 +132,7 @@
   retries: 120
   delay: 20
 
+# TODO this needs to be able to work with more than 1 replica
 - name: Wait for LM UI to be ready
   shell: kubectl get pods | grep nimrod
   register: nimrod_status
