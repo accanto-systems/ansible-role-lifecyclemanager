@@ -50,4 +50,3 @@
   set_fact:
     lm_api_addr_external: "{% if lm_secure|default(False)|bool == True %}https{% else %}http{% endif %}://app.lm:{% if lm_secure|default(False)|bool == True %}32443{% else %}32080{% endif %}"
     lm_api_addr_internal: "{% if lm_secure|default(False)|bool == True %}https{% else %}http{% endif %}://ishtar:8280"
-

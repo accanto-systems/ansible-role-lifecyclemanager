@@ -31,6 +31,11 @@ lm_configurator_chart_name: lm-configurator
 ###########################################################
 # Docker Images
 ###########################################################
+
+## Need to be able to override the DOCKER_HOST e.g. for MicroK8s
+docker_env:
+  DOCKER_HOST: "fd://"
+
 ## Pull a lm-docker-source package from HTTP or FILE location
 lm_docker_strategy: from_package
 # Path to lm-docker-source package (can be file based or http)

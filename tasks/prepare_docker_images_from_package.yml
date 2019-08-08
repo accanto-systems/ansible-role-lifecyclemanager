@@ -53,5 +53,4 @@
 
 - name: Build LM Docker Images (this may take some time)
   command: docker-compose -f {{ lm_installer_dir }}/{{ docker_package_content.files[0].split('/')[0] }}/docker-compose.yml build
-  # when: k8s_type|default('microk8s')|string == 'microk8s'
-  environment: "{{ DOCKER_ENV }}"
+  environment: "{{ docker_env }}"
