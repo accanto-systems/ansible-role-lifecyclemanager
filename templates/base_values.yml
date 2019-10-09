@@ -33,8 +33,6 @@ kibana:
 {% else %}
   enabled: false
 {% endif %}
-  image:
-    tag: "6.1.1"
   ingress:
     enabled: true
     hosts:
