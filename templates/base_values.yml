@@ -28,11 +28,7 @@ filebeat:
 {% endif %}
 
 kibana:
-{% if lm_kibana_enabled|default(False)|bool == True %}
   enabled: true
-{% else %}
-  enabled: false
-{% endif %}
   ingress:
     enabled: true
     hosts:

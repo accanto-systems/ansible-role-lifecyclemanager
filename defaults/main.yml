@@ -88,7 +88,6 @@ lm_init_volumes: True
 #lm_theme_directory: directory which includes theme.tar file
 
 # Enable/disable optional elements of LM
-lm_kibana_enabled: True
 lm_kafdrop_enabled: False
 lm_nginx_ingress_enabled: True
 lm_filebeat_enabled: True
