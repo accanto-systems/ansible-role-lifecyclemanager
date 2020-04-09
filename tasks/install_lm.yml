@@ -45,7 +45,9 @@
 
 # TODO this needs to be able to work with more than 1 replica
 - name: Wait for Kafka
-  shell: kubectl get pods | grep kafka
+  shell: source /etc/profile.d/apps-bin-path.sh && kubectl get pods | grep kafka
+  args:
+    executable: /bin/bash
   register: kafka_status
   until: kafka_status.stdout.find("1/1") != -1
   retries: 150
@@ -53,20 +55,26 @@
 
 # TODO this needs to be able to work with more than 1 replica
 - name: Wait for Cassandra
-  shell: kubectl get pods | grep cassandra
+  shell: source /etc/profile.d/apps-bin-path.sh && kubectl get pods | grep cassandra
+  args:
+    executable: /bin/bash
   register: cass_status
   until: cass_status.stdout.find("1/1") != -1
   retries: 50
   delay: 20
 
 - name: Determine Elasticsearch pod to wait for
-  shell: kubectl get pods | grep elasticsearch-client
+  shell: source /etc/profile.d/apps-bin-path.sh && kubectl get pods | grep elasticsearch-client
+  args:
+    executable: /bin/bash
   register: elastic_client_exists
   failed_when: false
 
 # TODO this needs to be able to work with more than 1 replica
 - name: Wait for Elasticsearch client
-  shell: kubectl get pods | grep elasticsearch-client
+  shell: source /etc/profile.d/apps-bin-path.sh && kubectl get pods | grep elasticsearch-client
+  args:
+    executable: /bin/bash
   register: elastic_status
   until: elastic_status.stdout.find("1/1") != -1
   retries: 100
@@ -75,7 +83,9 @@
 
 # TODO this needs to be able to work with more than 1 replica
 - name: Wait for Elasticsearch data
-  shell: kubectl get pods | grep elasticsearch-data
+  shell: source /etc/profile.d/apps-bin-path.sh && kubectl get pods | grep elasticsearch-data
+  args:
+    executable: /bin/bash
   register: elastic_status
   until: elastic_status.stdout.find("1/1") != -1
   retries: 100
@@ -103,19 +113,25 @@
   when: lm_theme|default(False)|bool == True
 
 - name: Clear theme configmap
-  shell: kubectl delete configmap lm-themes
+  shell: source /etc/profile.d/apps-bin-path.sh && kubectl delete configmap lm-themes
+  args:
+    executable: /bin/bash
   ignore_errors: yes
   when: lm_theme|default(False)|bool == True
 
 - name: Create theme configmap
-  shell: kubectl create configmap lm-themes --from-file /tmp/theme.tar
+  shell: source /etc/profile.d/apps-bin-path.sh && kubectl create configmap lm-themes --from-file /tmp/theme.tar
+  args:
+    executable: /bin/bash
   when: lm_theme|default(False)|bool == True
 
 - name: Install LM Configurator
   command: helm install {{ helm_inst_configurator_chart }} --name lm-configurator {{ flavour_values | trim }} {{base_values}} {% if docker_registry_values_path is defined %}-f {{ docker_registry_values_path }}{% endif %}{% if lm_theme|default(False)|bool == True %} -f {{ lm_installer_dir }}/theme.yml{% endif %} {% if extra_values is defined %}{{extra_values}}{% endif %}
 
 - name: Wait for LM Configurator to complete
-  shell: kubectl get pods | grep lm-configurator | awk '{print $3}'
+  shell: source /etc/profile.d/apps-bin-path.sh && kubectl get pods | grep lm-configurator | awk '{print $3}'
+  args:
+    executable: /bin/bash
   register: lm_configurator_status_cmd
   until: lm_configurator_status_cmd.stdout.find("Completed") != -1
   retries: 200
@@ -126,7 +142,9 @@
 
 # TODO this needs to be able to work with more than 1 replica
 - name: Wait for LM Gateway to be ready
-  shell: kubectl get pods | grep ishtar
+  shell: source /etc/profile.d/apps-bin-path.sh && kubectl get pods | grep ishtar
+  args:
+    executable: /bin/bash
   register: ishtar_status
   until: ishtar_status.stdout.find("1/1") != -1
   retries: 120
@@ -134,7 +152,9 @@
 
 # TODO this needs to be able to work with more than 1 replica
 - name: Wait for LM UI to be ready
-  shell: kubectl get pods | grep nimrod
+  shell: source /etc/profile.d/apps-bin-path.sh && kubectl get pods | grep nimrod
+  args:
+    executable: /bin/bash
   register: nimrod_status
   until: nimrod_status.stdout.find("1/1") != -1
   retries: 120
